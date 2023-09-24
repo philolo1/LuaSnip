@@ -97,7 +97,9 @@ local function unlink_set_adjacent_as_current_no_log(snippet)
 	if next_current then
 		-- if snippet was active before, we need to now set its parent to be no
 		-- longer inner_active.
-		if snippet.parent_node == next_current and next_current.inner_active then
+		if
+			snippet.parent_node == next_current and next_current.inner_active
+		then
 			snippet.parent_node:input_leave_children()
 		else
 			-- set no_move.
@@ -106,7 +108,11 @@ local function unlink_set_adjacent_as_current_no_log(snippet)
 				-- this won't try to set the previously broken snippet as
 				-- current, since that link is removed in
 				-- `remove_from_jumplist`.
-				unlink_set_adjacent_as_current(next_current, "Error while setting adjacent snippet as current node: %s", err)
+				unlink_set_adjacent_as_current(
+					next_current,
+					"Error while setting adjacent snippet as current node: %s",
+					err
+				)
 			end
 		end
 	end
@@ -138,7 +144,12 @@ local function safe_jump_current(dir, no_move, dry_run)
 	else
 		local snip = node.parent.snippet
 
-		unlink_set_adjacent_as_current(snip, "Removing snippet `%s` due to error %s", snip.trigger, res)
+		unlink_set_adjacent_as_current(
+			snip,
+			"Removing snippet `%s` due to error %s",
+			snip.trigger,
+			res
+		)
 		return session.current_nodes[vim.api.nvim_get_current_buf()]
 	end
 end
@@ -185,7 +196,11 @@ local function in_snippet()
 		-- if there was an error getting the position, the snippets text was
 		-- most likely removed, resulting in messed up extmarks -> error.
 		-- remove the snippet.
-		unlink_set_adjacent_as_current(snippet, "Error while getting extmark-position: %s", snip_begin_pos)
+		unlink_set_adjacent_as_current(
+			snippet,
+			"Error while getting extmark-position: %s",
+			snip_begin_pos
+		)
 		return
 	end
 	local pos = vim.api.nvim_win_get_cursor(0)
@@ -259,7 +274,8 @@ local function snip_expand(snippet, opts)
 	session.current_nodes[vim.api.nvim_get_current_buf()] =
 		opts.jump_into_func(snip)
 
-	local buf_snippet_roots = session.snippet_roots[vim.api.nvim_get_current_buf()]
+	local buf_snippet_roots =
+		session.snippet_roots[vim.api.nvim_get_current_buf()]
 	if not session.config.keep_roots and #buf_snippet_roots > 1 then
 		-- if history is not set, and there is more than one snippet-root,
 		-- remove the other one.
@@ -396,7 +412,12 @@ local function safe_choice_action(snip, ...)
 
 		-- not very elegant, but this way we don't have a near
 		-- re-implementation of unlink_current.
-		unlink_set_adjacent_as_current(snip, "Removing snippet `%s` due to error %s", snip.trigger, res)
+		unlink_set_adjacent_as_current(
+			snip,
+			"Removing snippet `%s` due to error %s",
+			snip.trigger,
+			res
+		)
 		return session.current_nodes[vim.api.nvim_get_current_buf()]
 	end
 end
@@ -465,19 +486,21 @@ local function active_update_dependents()
 
 		local ok, err = pcall(active.update_dependents, active)
 		if not ok then
-			log.warn(
-			)
-			unlink_set_adjacent_as_current(active.parent.snippet,
+			log.warn()
+			unlink_set_adjacent_as_current(
+				active.parent.snippet,
 				"Error while updating dependents for snippet %s due to error %s",
 				active.parent.snippet.trigger,
-				err)
+				err
+			)
 			return
 		end
 
 		-- 'restore' orientation of extmarks, may have been changed by some set_text or similar.
 		ok, err = pcall(active.focus, active)
 		if not ok then
-			unlink_set_adjacent_as_current(active.parent.snippet,
+			unlink_set_adjacent_as_current(
+				active.parent.snippet,
 				"Error while entering node in snippet %s: %s",
 				active.parent.snippet.trigger,
 				err
@@ -579,7 +602,11 @@ local function unlink_current_if_deleted()
 	-- * textnodes that should contain text still do so, and
 	-- * that extmarks still fulfill all expectations (should be successive, no gaps, etc.)
 	if not snippet:extmarks_valid() then
-		unlink_set_adjacent_as_current(snippet, "Detected deletion of snippet `%s`, removing it", snippet.trigger)
+		unlink_set_adjacent_as_current(
+			snippet,
+			"Detected deletion of snippet `%s`, removing it",
+			snippet.trigger
+		)
 	end
 end
 
@@ -606,7 +633,11 @@ local function exit_out_of_region(node)
 		pcall(snippet.mark.pos_begin_end, snippet.mark)
 
 	if not ok then
-		unlink_set_adjacent_as_current(snippet, "Error while getting extmark-position: %s", snip_begin_pos)
+		unlink_set_adjacent_as_current(
+			snippet,
+			"Error while getting extmark-position: %s",
+			snip_begin_pos
+		)
 		return
 	end
 
@@ -736,7 +767,7 @@ local function activate_node(opts)
 	local _, _, _, node = node_util.snippettree_find_undamaged_node(pos, {
 		tree_respect_rgravs = true,
 		tree_preference = node_util.binarysearch_preference.inside,
-		snippet_preference = node_util.binarysearch_preference.interactive
+		snippet_preference = node_util.binarysearch_preference.interactive,
 	})
 
 	if not node then
@@ -746,7 +777,10 @@ local function activate_node(opts)
 
 	-- only activate interactive nodes, or nodes that are immediately nested
 	-- inside a choiceNode.
-	if not node_util.interactive_node(node) and rawget(node, "choice") == nil then
+	if
+		not node_util.interactive_node(node)
+		and rawget(node, "choice") == nil
+	then
 		if strict then
 			error("Refusing to activate a non-interactive node.")
 			return
@@ -766,7 +800,10 @@ local function activate_node(opts)
 		end
 	end
 
-	node_util.refocus(session.current_nodes[vim.api.nvim_get_current_buf()], node)
+	node_util.refocus(
+		session.current_nodes[vim.api.nvim_get_current_buf()],
+		node
+	)
 	-- input_enter node again, to get highlight and the like.
 	-- One side-effect of this is that an event will be execute twice, but I
 	-- feel like that is a trade-off worth doing, since it otherwise refocus
@@ -846,7 +883,7 @@ ls = util.lazy_table({
 	setup = require("luasnip.config").setup,
 	extend_decorator = extend_decorator,
 	log = require("luasnip.util.log"),
-	activate_node = activate_node
+	activate_node = activate_node,
 }, ls_lazy)
 
 return ls

@@ -346,7 +346,7 @@ local function _S(snip, nodes, opts)
 
 			-- list of snippets expanded within the region of this snippet.
 			-- sorted by their buffer-position, for quick searching.
-			child_snippets = {}
+			child_snippets = {},
 		}),
 		opts
 	)
@@ -483,7 +483,9 @@ function Snippet:remove_from_jumplist()
 
 	self:exit()
 
-	local sibling_list = self.parent_node ~= nil and self.parent_node.parent.snippet.child_snippets or session.snippet_roots[vim.api.nvim_get_current_buf()]
+	local sibling_list = self.parent_node ~= nil
+			and self.parent_node.parent.snippet.child_snippets
+		or session.snippet_roots[vim.api.nvim_get_current_buf()]
 	local self_indx
 	for i, snip in ipairs(sibling_list) do
 		if snip == self then
@@ -519,8 +521,15 @@ function Snippet:remove_from_jumplist()
 	end
 end
 
-local function insert_into_jumplist(snippet, start_node, current_node, parent_node, sibling_snippets, own_indx)
-	local prev_snippet = sibling_snippets[own_indx-1]
+local function insert_into_jumplist(
+	snippet,
+	start_node,
+	current_node,
+	parent_node,
+	sibling_snippets,
+	own_indx
+)
+	local prev_snippet = sibling_snippets[own_indx - 1]
 	-- have not yet inserted self!!
 	local next_snippet = sibling_snippets[own_indx]
 
@@ -610,11 +619,12 @@ function Snippet:trigger_expand(current_node, pos_id, env)
 	local pos = vim.api.nvim_buf_get_extmark_by_id(0, session.ns_id, pos_id, {})
 
 	-- find tree-node the snippet should be inserted at (could be before another node).
-	local _, sibling_snippets, own_indx, parent_node = node_util.snippettree_find_undamaged_node(pos, {
-		tree_respect_rgravs = false,
-		tree_preference = node_util.binarysearch_preference.outside,
-		snippet_preference = node_util.binarysearch_preference.linkable
-	})
+	local _, sibling_snippets, own_indx, parent_node =
+		node_util.snippettree_find_undamaged_node(pos, {
+			tree_respect_rgravs = false,
+			tree_preference = node_util.binarysearch_preference.outside,
+			snippet_preference = node_util.binarysearch_preference.linkable,
+		})
 	if current_node then
 		node_util.refocus(current_node, parent_node)
 		if parent_node then
@@ -695,7 +705,7 @@ function Snippet:trigger_expand(current_node, pos_id, env)
 	-- Marks should stay at the beginning of the snippet, only the first mark is needed.
 	start_node.mark = self.nodes[1].mark
 	start_node.pos = -1
-	start_node.absolute_position = {-1}
+	start_node.absolute_position = { -1 }
 	start_node.parent = self
 
 	-- hook up i0 and start_node, and then the snippet itself.
@@ -711,7 +721,14 @@ function Snippet:trigger_expand(current_node, pos_id, env)
 	-- parent_node is nil if the snippet is toplevel.
 	self.parent_node = parent_node
 
-	insert_into_jumplist(self, start_node, current_node, parent_node, sibling_snippets, own_indx)
+	insert_into_jumplist(
+		self,
+		start_node,
+		current_node,
+		parent_node,
+		sibling_snippets,
+		own_indx
+	)
 
 	return parent_node
 end
@@ -1348,10 +1365,16 @@ end
 -- pos-column has to be a byte-index, not a display-column.
 function Snippet:smallest_node_at(pos, mode)
 	local self_from, self_to = self.mark:pos_begin_end_raw()
-	assert(util.pos_cmp(self_from, pos) <= 0 and util.pos_cmp(pos, self_to) <= 0, "pos is not inside the snippet.")
+	assert(
+		util.pos_cmp(self_from, pos) <= 0 and util.pos_cmp(pos, self_to) <= 0,
+		"pos is not inside the snippet."
+	)
 
 	local smallest_node = self:node_at(pos, mode)
-	assert(smallest_node ~= nil, "could not find a smallest node (very unexpected)")
+	assert(
+		smallest_node ~= nil,
+		"could not find a smallest node (very unexpected)"
+	)
 
 	return smallest_node
 end
@@ -1384,7 +1407,8 @@ end
 
 function Snippet:extmarks_valid()
 	-- assumption: extmarks are contiguous, and all can be queried via pos_begin_end_raw.
-	local ok, current_from, self_to = pcall(self.mark.pos_begin_end_raw, self.mark)
+	local ok, current_from, self_to =
+		pcall(self.mark.pos_begin_end_raw, self.mark)
 	if not ok then
 		return false
 	end
@@ -1395,12 +1419,17 @@ function Snippet:extmarks_valid()
 	end
 
 	for _, node in ipairs(self.nodes) do
-		local ok_, node_from, node_to = pcall(node.mark.pos_begin_end_raw, node.mark)
+		local ok_, node_from, node_to =
+			pcall(node.mark.pos_begin_end_raw, node.mark)
 		-- this snippet is invalid if:
 		-- - we can't get the position of some node
 		-- - the positions aren't contiguous or don't completely fill the parent, or
 		-- - any child of this node violates these rules.
-		if not ok_ or util.pos_cmp(current_from, node_from) ~= 0 or not node:extmarks_valid() then
+		if
+			not ok_
+			or util.pos_cmp(current_from, node_from) ~= 0
+			or not node:extmarks_valid()
+		then
 			return false
 		end
 		current_from = node_to

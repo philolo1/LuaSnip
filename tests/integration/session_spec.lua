@@ -5,9 +5,15 @@ local exec_lua, feed, exec = helpers.exec_lua, helpers.feed, helpers.exec
 local ls_helpers = require("helpers")
 local Screen = require("test.functional.ui.screen")
 
-local function expand() exec_lua("ls.expand()") end
-local function jump(dir) exec_lua("ls.jump(...)", dir) end
-local function change(dir) exec_lua("ls.change_choice(...)", dir) end
+local function expand()
+	exec_lua("ls.expand()")
+end
+local function jump(dir)
+	exec_lua("ls.jump(...)", dir)
+end
+local function change(dir)
+	exec_lua("ls.change_choice(...)", dir)
+end
 
 describe("session", function()
 	local screen
@@ -15,7 +21,7 @@ describe("session", function()
 	before_each(function()
 		helpers.clear()
 		ls_helpers.setup_jsregexp()
-		ls_helpers.session_setup_luasnip({hl_choiceNode = true})
+		ls_helpers.session_setup_luasnip({ hl_choiceNode = true })
 
 		-- add a rather complicated snippet.
 		-- It may be a bit hard to grasp, but will cover lots and lots of
@@ -133,14 +139,18 @@ describe("session", function()
 			[1] = { bold = true, foreground = Screen.colors.Brown },
 			[2] = { bold = true },
 			[3] = { background = Screen.colors.LightGray },
-			[4] = {background = Screen.colors.Red1, foreground = Screen.colors.White}
+			[4] = {
+				background = Screen.colors.Red1,
+				foreground = Screen.colors.White,
+			},
 		})
 	end)
 
 	it("Deleted snippet is handled properly in expansion.", function()
 		feed("o<Cr><Cr><Up>fn")
 		exec_lua("ls.expand()")
-		screen:expect{grid=[[
+		screen:expect({
+			grid = [[
 			                                                  |
 			                                                  |
 			/**                                               |
@@ -170,9 +180,13 @@ describe("session", function()
 			{0:~                                                 }|
 			{0:~                                                 }|
 			{0:~                                                 }|
-			{2:-- INSERT --}                                      |]]}
-		jump(1) jump(1) jump(1)
-		screen:expect{grid=[[
+			{2:-- INSERT --}                                      |]],
+		})
+		jump(1)
+		jump(1)
+		jump(1)
+		screen:expect({
+			grid = [[
 			                                                  |
 			                                                  |
 			/**                                               |
@@ -202,15 +216,18 @@ describe("session", function()
 			{0:~                                                 }|
 			{0:~                                                 }|
 			{0:~                                                 }|
-			{2:-- INSERT --}                                      |]]}
+			{2:-- INSERT --}                                      |]],
+		})
 		-- delete whole buffer.
 		feed("<Esc>ggVGcfn")
 		-- immediately expand at the old position of the snippet.
 		exec_lua("ls.expand()")
 		-- first jump goes to i(-1), second might go back into deleted snippet,
 		-- if we did something wrong.
-		jump(-1) jump(-1)
-		screen:expect{grid=[[
+		jump(-1)
+		jump(-1)
+		screen:expect({
+			grid = [[
 			^/**                                               |
 			 * A short Description                            |
 			 */                                               |
@@ -240,10 +257,19 @@ describe("session", function()
 			{0:~                                                 }|
 			{0:~                                                 }|
 			{0:~                                                 }|
-			{2:-- INSERT --}                                      |]]}
+			{2:-- INSERT --}                                      |]],
+		})
 		-- seven jumps to go to i(0), 8th, again, should not do anything.
-		jump(1) jump(1) jump(1) jump(1) jump(1) jump(1) jump(1) jump(1)
-		screen:expect{grid=[[
+		jump(1)
+		jump(1)
+		jump(1)
+		jump(1)
+		jump(1)
+		jump(1)
+		jump(1)
+		jump(1)
+		screen:expect({
+			grid = [[
 			/**                                               |
 			 * A short Description                            |
 			 */                                               |
@@ -273,12 +299,14 @@ describe("session", function()
 			{0:~                                                 }|
 			{0:~                                                 }|
 			{0:~                                                 }|
-			{2:-- INSERT --}                                      |]]}
+			{2:-- INSERT --}                                      |]],
+		})
 	end)
 	it("Deleted snippet is handled properly when jumping.", function()
 		feed("o<Cr><Cr><Up>fn")
 		exec_lua("ls.expand()")
-		screen:expect{grid=[[
+		screen:expect({
+			grid = [[
 			                                                  |
 			                                                  |
 			/**                                               |
@@ -308,9 +336,13 @@ describe("session", function()
 			{0:~                                                 }|
 			{0:~                                                 }|
 			{0:~                                                 }|
-			{2:-- INSERT --}                                      |]]}
-		jump(1) jump(1) jump(1)
-		screen:expect{grid=[[
+			{2:-- INSERT --}                                      |]],
+		})
+		jump(1)
+		jump(1)
+		jump(1)
+		screen:expect({
+			grid = [[
 			                                                  |
 			                                                  |
 			/**                                               |
@@ -340,7 +372,8 @@ describe("session", function()
 			{0:~                                                 }|
 			{0:~                                                 }|
 			{0:~                                                 }|
-			{2:-- INSERT --}                                      |]]}
+			{2:-- INSERT --}                                      |]],
+		})
 		-- delete whole buffer.
 		feed("<Esc>ggVGd")
 		-- should not cause an error.
@@ -349,7 +382,8 @@ describe("session", function()
 	it("Deleting nested snippet only removes it.", function()
 		feed("o<Cr><Cr><Up>fn")
 		exec_lua("ls.expand()")
-		screen:expect{grid=[[
+		screen:expect({
+			grid = [[
 			                                                  |
 			                                                  |
 			/**                                               |
@@ -379,10 +413,12 @@ describe("session", function()
 			{0:~                                                 }|
 			{0:~                                                 }|
 			{0:~                                                 }|
-			{2:-- INSERT --}                                      |]]}
+			{2:-- INSERT --}                                      |]],
+		})
 		feed("<Esc>jlafn")
 		expand()
-		screen:expect{grid=[[
+		screen:expect({
+			grid = [[
 			                                                  |
 			                                                  |
 			/**                                               |
@@ -412,11 +448,14 @@ describe("session", function()
 			{0:~                                                 }|
 			{0:~                                                 }|
 			{0:~                                                 }|
-			{2:-- INSERT --}                                      |]]}
-		jump(1) jump(1)
+			{2:-- INSERT --}                                      |]],
+		})
+		jump(1)
+		jump(1)
 		feed("<Esc>llllvbbbx")
 		screen:snapshot_util()
-		jump(-1) jump(-1)
+		jump(-1)
+		jump(-1)
 		screen:snapshot_util()
 	end)
 end)
